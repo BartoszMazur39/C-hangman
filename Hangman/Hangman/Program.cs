@@ -6,7 +6,10 @@ namespace Hangman
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            ReadFile readFile = new ReadFile();
+            string randomCapital = readFile.pickRandomCapital();
+            Console.WriteLine(randomCapital);
+            
         }
     }
 }
