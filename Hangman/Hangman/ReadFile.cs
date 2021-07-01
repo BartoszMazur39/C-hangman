@@ -7,15 +7,17 @@ namespace Hangman
     class ReadFile
     {
         
-        public string pickRandomCapital() 
+        public string[] pickRandomCapital() 
         {
             string[] lines;
+            string[] output = new string[2];
             try
             {
                 lines = System.IO.File.ReadAllLines(@"countries_and_capitals.txt");
             } catch(Exception)
             {
-                return "Failed reading from file";
+                output[0] = "Failed reading from file";
+                return output;
             }
 
             Random random = new Random();
@@ -23,7 +25,10 @@ namespace Hangman
             string countryAndCapital = lines[index];
             int wallIndex = countryAndCapital.IndexOf('|');
             string capital = countryAndCapital.Substring(wallIndex + 2);
-            return capital;
+            string country = countryAndCapital.Substring(0, wallIndex - 2);
+            output[0] = capital;
+            output[1] = country;
+            return output;
         }
         
 }
