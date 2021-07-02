@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace Hangman
 {
@@ -19,9 +20,9 @@ namespace Hangman
             Regex rgx = new Regex("[a-zA-Z]");
             hiddenAnswer = rgx.Replace(hiddenAnswer, "_");
 
-            UI(randomCapital, hiddenAnswer);
+            UI(randomCapital, hiddenAnswer, randomCountry);
         }
-        public static void UI(string randomCapital, string hiddenAnswer)
+        public static void UI(string randomCapital, string hiddenAnswer, string randomCountry)
         {
             // Checking if the file has been properly read
             Console.WriteLine(randomCapital);
@@ -30,18 +31,28 @@ namespace Hangman
                 return;
             }
 
-            Player player = new Player();
-            Console.WriteLine($"{hiddenAnswer} lifes: {player.lifes}");
-
-
+            Stopwatch stopwatch = new Stopwatch();
             string decisionInput;
             char guessedLetter = '1';
             string guessedWord;
             string capitalWithGuessedLetters = randomCapital;
+            string notInWord = "Not in word letters:";
+            int guessCounts = 0;
+            int savedTime = 0;
+
+            Player player = new Player();
+            Console.WriteLine($"{hiddenAnswer}   lifes: {player.lifes}");
+            stopwatch.Start();
 
             while (true)
             {
                 // Letter or entire word
+
+                if(player.lifes < 4)
+                {
+                    Console.WriteLine($"Hint: The capital of {randomCountry}");
+                }
+
                 Console.WriteLine("Would you like to guess a letter (type 1) or whole word (type 2) ?");
                 decisionInput = Console.ReadLine();
 
@@ -62,7 +73,7 @@ namespace Hangman
                     char upperGuessedLetter = Char.ToUpper(guessedLetter);
 
 
-                    guessLetter(ref hiddenAnswer, guessedLetter, ref player, ref capitalWithGuessedLetters, lowerGuessedLetter, upperGuessedLetter);
+                    guessLetter(ref hiddenAnswer, guessedLetter, ref player, ref capitalWithGuessedLetters, lowerGuessedLetter, upperGuessedLetter, ref notInWord, ref guessCounts);
 
 
                 } else if (decisionInput == "2")
@@ -73,21 +84,42 @@ namespace Hangman
 
                     guessedWord = Console.ReadLine();
 
-                    guessWord(guessedWord, randomCapital, ref hiddenAnswer, ref player);
+                    guessWord(guessedWord, randomCapital, ref hiddenAnswer, ref player, ref savedTime);
 
                 } else
                 {
                     Console.WriteLine("Unsupported Input. Try again \n");
                 }
 
-                Console.WriteLine($"{hiddenAnswer} lifes: {player.lifes}");
+                Console.WriteLine($"{hiddenAnswer}   lifes: {player.lifes}    {notInWord}");
 
                 if (hiddenAnswer.IndexOf("_") == -1)
                 {
                     //Win
 
+                    stopwatch.Stop();
                     Console.WriteLine("Congratulatin you won this game :)");
+                    Console.WriteLine($"You guessed the capital after {guessCounts} letters. It took you {Math.Round(stopwatch.Elapsed.TotalSeconds, 0) - savedTime} seconds");
+
+                    // Asking about restart after wining
+
+                    while (true)
+                    {
+                        Console.WriteLine("Do you want to restart the game? 'y' if yes 'n' if no");
+                        string restart = Console.ReadLine();
+                        if (restart == "y")
+                        {
+                            stopwatch.Reset();
+                            Main(null);
+                            break;
+                        }else if (restart == "n")
+                        {
+                            break;
+                        }
+                    }
                     break;
+
+
                 }
 
                 if (player.lifes < 1)
@@ -95,25 +127,48 @@ namespace Hangman
                     //Lose
 
                     Console.WriteLine("No more lifes, you lose :(");
+
+                    //Asking about restart after losing
+
+                    while (true)
+                    {
+                        Console.WriteLine("Do you want to restart the game? 'y' if yes 'n' if no");
+                        string restart = Console.ReadLine();
+                        if (restart == "y")
+                        {
+                            Main(null);
+                            break;
+                        }else if (restart == "n")
+                        {
+                            break;
+                        }
+                    }
                     break;
+
                 }
 
             }
 
-            static void guessLetter(ref string hiddenAnswer, char guessedLetter, ref Player player, ref string capitalWithGuessedLetters, char lowerGuessedLetter, char upperGuessedLetter)
+            static void guessLetter(ref string hiddenAnswer, char guessedLetter, ref Player player, ref string capitalWithGuessedLetters, char lowerGuessedLetter, char upperGuessedLetter, ref string notInWord, ref int guessCounts)
             {
                 if (capitalWithGuessedLetters.IndexOf(lowerGuessedLetter) == -1 && capitalWithGuessedLetters.IndexOf(upperGuessedLetter) == -1)
                 {
                     //Letter bad answer
 
                     Console.WriteLine("Bad answer");
+
+                    guessCounts++;
                     player.lifes -= 1;
+                    
+                    notInWord = notInWord + " " + guessedLetter;
                     
                 } else
                 {
                     //Letter good answer
 
                     Console.WriteLine("Good answer");
+
+                    guessCounts++;
 
                     int index;
                     while (true)
@@ -141,7 +196,7 @@ namespace Hangman
 
             }
 
-            static void guessWord(string guessedWord, string randomCapital, ref string hiddenAnswer, ref Player player)
+            static void guessWord(string guessedWord, string randomCapital, ref string hiddenAnswer, ref Player player, ref int savedTime)
             {
                 // making sure if player type word witch CapsLock or forgot upper cases the program will accept this
 
@@ -155,6 +210,7 @@ namespace Hangman
                     Console.WriteLine("Good answer");
 
                     hiddenAnswer = randomCapital;
+                    savedTime ++;
                 } else
                 {
                     // Whole word bad answer
