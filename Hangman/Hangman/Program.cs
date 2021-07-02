@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using System.Collections;
 
 namespace Hangman
 {
@@ -25,7 +27,7 @@ namespace Hangman
         public static void UI(string randomCapital, string hiddenAnswer, string randomCountry)
         {
             // Checking if the file has been properly read
-            Console.WriteLine(randomCapital);
+            
             if (randomCapital == "Failed reading from file")
             {
                 return;
@@ -39,6 +41,7 @@ namespace Hangman
             string notInWord = "Not in word letters:";
             int guessCounts = 0;
             int savedTime = 0;
+            string hangman = "";
 
             Player player = new Player();
             Console.WriteLine($"{hiddenAnswer}   lifes: {player.lifes}");
@@ -91,15 +94,77 @@ namespace Hangman
                     Console.WriteLine("Unsupported Input. Try again \n");
                 }
 
-                Console.WriteLine($"{hiddenAnswer}   lifes: {player.lifes}    {notInWord}");
+                //ASCII
+
+                if (player.lifes == 4)
+                {
+                    hangman = "  _______ \n |/      | \n | \n | \n | \n | \n | \n_|__ ";
+                }else if (player.lifes == 3)
+                {
+                    hangman = "  _______ \n |/      | \n |      (_) \n | \n | \n | \n | \n_|__ ";
+                }else if (player.lifes == 2)
+                {
+                    hangman = "  _______ \n |/      | \n |      (_) \n |      \\|/ \n | \n | \n | \n_|__ ";
+                }else if (player.lifes == 1)
+                {
+                    hangman = "  _______ \n |/      | \n |      (_) \n |      \\|/ \n |       | \n | \n | \n_|__ ";
+                }else if (player.lifes == 0)
+                {
+                    hangman = "  _______ \n |/      | \n |      (_) \n |      \\|/ \n |       | \n |      / \\ \n | \n_|__ ";
+                }
+
 
                 if (hiddenAnswer.IndexOf("_") == -1)
                 {
                     //Win
 
                     stopwatch.Stop();
+                    Console.WriteLine($"{hiddenAnswer}   lifes: {player.lifes}    {notInWord}\n {hangman}");
                     Console.WriteLine("Congratulatin you won this game :)");
                     Console.WriteLine($"You guessed the capital after {guessCounts} letters. It took you {Math.Round(stopwatch.Elapsed.TotalSeconds, 0) - savedTime} seconds");
+
+                    //Adding high score
+
+                    Console.WriteLine("Whats your name?");
+                    string name = Console.ReadLine();
+                    DateTime date = DateTime.Now;
+
+                    using (StreamWriter writeHighScore = File.AppendText("high_score.txt"))
+                    {
+                        writeHighScore.WriteLine($"{name} | {date} | {Math.Round(stopwatch.Elapsed.TotalSeconds, 0) - savedTime} | {guessCounts} | {hiddenAnswer}");
+                        
+                    }
+
+                    //high scores
+                    string temp;
+                    string[] result = File.ReadAllLines("high_score.txt");
+                    for(int i = 0; i < result.Length; i++)
+                    {
+                        for(int j = 0; j < result.Length; j++)
+                        {
+                            if(Convert.ToInt32(result[j].Split('|')[2]) > Convert.ToInt32(result[i].Split('|')[2]))
+                            {
+                                temp = result[i];
+                                result[i] = result[j];
+                                result[j] = temp;
+                            }
+                        }
+                    }
+
+                    int topScores;
+                    if(result.Length < 10)
+                    {
+                        topScores = result.Length;
+                    } else
+                    {
+                        topScores = 10;
+                    }
+                    Console.WriteLine("Top ten players: ");
+                    for(int i = 0; i < topScores; i++)
+                    {
+                        Console.WriteLine(result[i]);
+                    }
+
 
                     // Asking about restart after wining
 
@@ -126,7 +191,11 @@ namespace Hangman
                 {
                     //Lose
 
+                    player.lifes = 0;
+                    Console.WriteLine($"{hiddenAnswer}   lifes: {player.lifes}    {notInWord}\n {hangman}");
+
                     Console.WriteLine("No more lifes, you lose :(");
+                    Console.WriteLine($"Correct answer: {randomCapital}");
 
                     //Asking about restart after losing
 
@@ -138,7 +207,7 @@ namespace Hangman
                         {
                             Main(null);
                             break;
-                        }else if (restart == "n")
+                        } else if (restart == "n")
                         {
                             break;
                         }
@@ -146,6 +215,11 @@ namespace Hangman
                     break;
 
                 }
+
+                
+
+
+                Console.WriteLine($"{hiddenAnswer}   lifes: {player.lifes}    {notInWord}\n {hangman}");
 
             }
 
@@ -180,13 +254,11 @@ namespace Hangman
                             index = capitalWithGuessedLetters.IndexOf(lowerGuessedLetter);
                             hiddenAnswer = hiddenAnswer.Remove(index, 1).Insert(index, "" + lowerGuessedLetter);
                             capitalWithGuessedLetters = capitalWithGuessedLetters.Remove(index, 1).Insert(index, "" + "_");
-                            Console.WriteLine(capitalWithGuessedLetters);
                         } else if (capitalWithGuessedLetters.IndexOf(upperGuessedLetter) > -1)
                         {
                             index = capitalWithGuessedLetters.IndexOf(upperGuessedLetter);
                             hiddenAnswer = hiddenAnswer.Remove(index, 1).Insert(index, "" + upperGuessedLetter);
                             capitalWithGuessedLetters = capitalWithGuessedLetters.Remove(index, 1).Insert(index, "" + "_");
-                            Console.WriteLine(capitalWithGuessedLetters);
                         } else
                         {
                             break;
