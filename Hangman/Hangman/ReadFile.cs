@@ -25,7 +25,7 @@ namespace Hangman
             string countryAndCapital = lines[index];
             int wallIndex = countryAndCapital.IndexOf('|');
             string capital = countryAndCapital.Substring(wallIndex + 2);
-            string country = countryAndCapital.Substring(0, wallIndex - 2);
+            string country = countryAndCapital.Substring(0, wallIndex - 1);
             output[0] = capital;
             output[1] = country;
             return output;
